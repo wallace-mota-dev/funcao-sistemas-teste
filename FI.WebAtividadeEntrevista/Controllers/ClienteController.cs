@@ -40,7 +40,7 @@ namespace WebAtividadeEntrevista.Controllers
                     Response.StatusCode = 400;
                     return Json(string.Join(Environment.NewLine, erros));
                 }
-                Console.WriteLine(bo.VerificarExistencia(model.CPF));
+
                 if (bo.VerificarExistencia(model.CPF))
                 {
                     Response.StatusCode = 400;
