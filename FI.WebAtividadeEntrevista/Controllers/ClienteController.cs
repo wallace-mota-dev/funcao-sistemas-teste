@@ -1,11 +1,13 @@
 ﻿using FI.AtividadeEntrevista.BLL;
-using WebAtividadeEntrevista.Models;
+using FI.AtividadeEntrevista.DML;
+using FI.WebAtividadeEntrevista.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
 using System.Web.Mvc;
-using FI.AtividadeEntrevista.DML;
+using WebAtividadeEntrevista.Models;
 
 namespace WebAtividadeEntrevista.Controllers
 {
@@ -42,7 +44,7 @@ namespace WebAtividadeEntrevista.Controllers
                 if (bo.VerificarExistencia(model.CPF))
                 {
                     Response.StatusCode = 400;
-                    return Json("CPF já cadastrado no sistema.");
+                    return Json("CPF já cadastrado para outro cliente.");
                 }
 
                 else
@@ -62,6 +64,23 @@ namespace WebAtividadeEntrevista.Controllers
                         CPF = model.CPF
                     });
 
+
+                    if (model.Beneficiarios != null)
+                    {
+                        List<Beneficiarios> beneficiariosToSave = new List<Beneficiarios>();
+                        foreach (BeneficiarioModel b in model.Beneficiarios)
+                        {
+                            beneficiariosToSave.Add(new Beneficiarios()
+                            {
+                                IdCliente = model.Id,
+                                CPF = b.cpf,
+                                Nome = b.nome
+                            });
+                        }
+
+                        BoBeneficiarios boBeneficiario = new BoBeneficiarios();
+                        boBeneficiario.Incluir(beneficiariosToSave);
+                    }
 
                     return Json("Cadastro efetuado com sucesso");
                 }
@@ -91,7 +110,7 @@ namespace WebAtividadeEntrevista.Controllers
                 }
                 Cliente clienteAtual = bo.Consultar(model.Id);
 
-                if (clienteAtual.CPF != model.CPF && bo.VerificarExistencia(model.CPF))
+                if ((clienteAtual.CPF != model.CPF) && bo.VerificarExistencia(model.CPF))
                 {
                     Response.StatusCode = 400;
                     return Json("CPF já cadastrado para outro cliente.");
@@ -127,8 +146,11 @@ namespace WebAtividadeEntrevista.Controllers
         [HttpGet]
         public ActionResult Alterar(long id)
         {
-            BoCliente bo = new BoCliente();
-            Cliente cliente = bo.Consultar(id);
+            BoCliente boCliente = new BoCliente();
+            Cliente cliente = boCliente.Consultar(id);
+            BoBeneficiarios boBeneficiarios = new BoBeneficiarios();
+            List<Beneficiarios> beneficiarios = boBeneficiarios.Consultar(id);
+
             Models.ClienteModel model = null;
 
             if (cliente != null)
@@ -145,10 +167,13 @@ namespace WebAtividadeEntrevista.Controllers
                     Nome = cliente.Nome,
                     Sobrenome = cliente.Sobrenome,
                     Telefone = cliente.Telefone,
-                    CPF = cliente.CPF
+                    CPF = cliente.CPF,
+                    Beneficiarios = beneficiarios.Select(b => new BeneficiarioModel
+                    {
+                        cpf = b.CPF,
+                        nome = b.Nome
+                    }).ToList()
                 };
-
-                ModelState.Clear();
             }
 
             return View(model);

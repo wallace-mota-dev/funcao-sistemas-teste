@@ -81,33 +81,222 @@
     </div>
 
     <div class="row">
+        <div class="col-md-12">
+            <div class="form-group">
+                <button type="button" class="btn btn-sm btn-primary pull-left btn-beneficiarios" data-toggle="modal" data-target="#modalBeneficiarios">
+                    Beneficiários
+                </button>
+            </div>
+        </div>
         <div class="col-lg-12">
             <div class="pull-right">
-                <button type="submit" class="btn btn-sm btn-success">Salvar</button>
+                <button type="submit" class="btn btn-sm  btn-primary btn-success">Salvar</button>
                 @Html.ActionLink("Voltar", "Index", "Cliente", new { }, new { @class = "btn btn-sm btn-danger" })
             </div>
         </div>
     </div>
 </form>
 
+<div class="modal fade" id="modalBeneficiarios" tabindex="-1" role="dialog" aria-labelledby="modalBeneficiariosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalBeneficiariosLabel">Beneficiários</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="beneficiario-form">
+                    <form id="formBeneficiario">
+                        <div class="row">
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label for="beneficiarioCPF">CPF:</label>
+                                    <input type="text" class="form-control" id="beneficiarioCPF" placeholder="Ex.: 010.011.111-00" maxlength="14">
+                                </div>
+                            </div>
+                            <div class="col-md-5">
+                                <div class="form-group">
+                                    <label for="beneficiarioNome">Nome:</label>
+                                    <input type="text" class="form-control" id="beneficiarioNome" placeholder="Ex.: Maria" maxlength="100">
+                                </div>
+                            </div>
+                            <div class="form-group" style="margin-top: 2.3rem;">
+                                <button type="button" class="btn btn-success w-100" id="btnIncluirBeneficiario">
+                                    Incluir
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="beneficiarios-table">
+                    <table class="table table-bordered" id="tabelaBeneficiarios" style="display: none;">
+                        <thead>
+                            <tr>
+                                <th>CPF</th>
+                                <th>Nome</th>
+                                <th>Ações</th>
+                            </tr>
+                        </thead>
+                        <tbody id="beneficiariosTbody">
+                        </tbody>
+                    </table>
+                    <div class="empty-state" id="emptyState">
+                        Nenhum beneficiário cadastrado
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
+
+    window.beneficiarios = [];
+
     document.addEventListener('DOMContentLoaded', function () {
         const cpfField = document.getElementById('CPF');
+        const beneficiarioCpfField = document.getElementById('beneficiarioCPF');
         const form = document.getElementById('formCadastro');
+        const btnIncluir = document.getElementById('btnIncluirBeneficiario');
+        const beneficiarioNome = document.getElementById('beneficiarioNome');
 
-        cpfField.addEventListener('input', function (e) {
-            let value = e.target.value.replace(/\D/g, '');
+        function formatCPF(input) {
+            input.addEventListener('input', function (e) {
+                let value = e.target.value.replace(/\D/g, '');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d)/, '$1.$2');
+                value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+                e.target.value = value;
+            });
+        }
 
-            value = value.replace(/(\d{3})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d)/, '$1.$2');
-            value = value.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        formatCPF(cpfField);
+        formatCPF(beneficiarioCpfField);
 
-            e.target.value = value;
+        function validarCPF(cpf) {
+            cpf = cpf.replace(/\D/g, '');
+            if (cpf.length !== 11) return false;
+            if (/^(\d)\1{10}$/.test(cpf)) return false;
+
+            let soma = 0;
+            for (let i = 0; i < 9; i++) {
+                soma += parseInt(cpf.charAt(i)) * (10 - i);
+            }
+            let resto = (soma * 10) % 11;
+            if (resto === 10 || resto === 11) resto = 0;
+            if (resto !== parseInt(cpf.charAt(9))) return false;
+
+            soma = 0;
+            for (let i = 0; i < 10; i++) {
+                soma += parseInt(cpf.charAt(i)) * (11 - i);
+            }
+            resto = (soma * 10) % 11;
+            if (resto === 10 || resto === 11) resto = 0;
+            return resto === parseInt(cpf.charAt(10));
+        }
+
+        function renderizarBeneficiarios() {
+            const tabela = document.getElementById('tabelaBeneficiarios');
+            const tbody = document.getElementById('beneficiariosTbody');
+            const emptyState = document.getElementById('emptyState');
+
+            if (beneficiarios.length === 0) {
+                tabela.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            tabela.style.display = 'table';
+
+            const html = beneficiarios.map((beneficiario, index) => `
+                    <tr>
+                        <td id="beneficiario-cpf">${beneficiario.cpf}</td>
+                        <td id="beneficiario-nome">${beneficiario.nome}</td>
+                        <td>
+                            <button type="button" class="btn btn-primary btn-alterar" onclick="alterarBeneficiario(${index})">Alterar</button>
+                            <button type="button" class="btn btn-primary btn-excluir-tabela" onclick="excluirBeneficiario(${index})">Excluir</button>
+                        </td>
+                    </tr>
+                `).join('');
+
+            tbody.innerHTML = html;
+        }
+
+        window.alterarBeneficiario = function (index) {
+            const beneficiario = beneficiarios[index];
+            beneficiarioCpfField.value = beneficiario.cpf;
+            beneficiarioNome.value = beneficiario.nome;
+
+            beneficiarios.splice(index, 1);
+            renderizarBeneficiarios();
+        };
+
+        window.excluirBeneficiario = function (index) {
+            if (confirm('Tem certeza que deseja excluir este beneficiário?')) {
+                beneficiarios.splice(index, 1);
+                renderizarBeneficiarios();
+            }
+        };
+
+        btnIncluir.addEventListener('click', function () {
+            const cpf = beneficiarioCpfField.value.trim();
+            const nome = beneficiarioNome.value.trim();
+
+            if (!cpf) {
+                alert('Por favor, informe o CPF do beneficiário.');
+                beneficiarioCpfField.focus();
+                return;
+            }
+
+            if (!nome) {
+                alert('Por favor, informe o nome do beneficiário.');
+                beneficiarioNome.focus();
+                return;
+            }
+
+            if (!validarCPF(cpf)) {
+                alert('CPF inválido. Por favor, verifique e tente novamente.');
+                beneficiarioCpfField.focus();
+                return;
+            }
+
+            const cpfLimpo = cpf.replace(/\D/g, '');
+            if (beneficiarios.some(b => b.cpf.replace(/\D/g, '') === cpfLimpo)) {
+                alert('Este CPF já foi cadastrado como beneficiário.');
+                return;
+            }
+
+            const cpfTitular = cpfField.value.replace(/\D/g, '');
+            if (cpfTitular && cpfLimpo === cpfTitular) {
+                alert('O CPF do beneficiário não pode ser igual ao CPF do titular.');
+                return;
+            }
+
+            beneficiarios.push({
+                cpf: cpf,
+                nome: nome
+            });
+
+            beneficiarioCpfField.value = '';
+            beneficiarioNome.value = '';
+
+            renderizarBeneficiarios();
+
         });
 
-        form.addEventListener('submit', function (e) {
+        document.addEventListener('DOMContentLoaded', function (e) {
+            e.preventDefault();
 
+            const cpfOriginal = cpfField.value;
             cpfField.value = cpfField.value.replace(/\D/g, '');
+
+            cpfField.value = cpfOriginal;
         });
+
+        renderizarBeneficiarios();
     });
+
 </script>

@@ -1,4 +1,5 @@
-﻿CREATE PROC FI_SP_IncClienteV2
+﻿CREATE PROC FI_SP_IncCliente
+	@CPF           VARCHAR (11),
     @NOME          VARCHAR (50) ,
     @SOBRENOME     VARCHAR (255),
     @NACIONALIDADE VARCHAR (50) ,
@@ -10,8 +11,28 @@
     @TELEFONE      VARCHAR (15)
 AS
 BEGIN
-	INSERT INTO CLIENTES (NOME, SOBRENOME, NACIONALIDADE, CEP, ESTADO, CIDADE, LOGRADOURO, EMAIL, TELEFONE) 
-	VALUES (@NOME, @SOBRENOME,@NACIONALIDADE,@CEP,@ESTADO,@CIDADE,@LOGRADOURO,@EMAIL,@TELEFONE)
-
-	SELECT SCOPE_IDENTITY()
+	    INSERT INTO CLIENTES (
+        CPF, 
+        NOME, 
+        SOBRENOME, 
+        NACIONALIDADE, 
+        CEP, 
+        ESTADO, 
+        CIDADE, 
+        LOGRADOURO, 
+        EMAIL,
+        TELEFONE
+    ) 
+    VALUES (
+        @CPF,
+        @NOME,
+        @SOBRENOME,
+        @NACIONALIDADE,
+        @CEP,
+        @ESTADO,
+        @CIDADE,
+        @LOGRADOURO,
+        @EMAIL,
+        @TELEFONE
+    )
 END
