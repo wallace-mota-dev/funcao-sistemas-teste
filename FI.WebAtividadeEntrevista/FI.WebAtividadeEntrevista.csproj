@@ -122,6 +122,7 @@
     <Compile Include="Global.asax.cs">
       <DependentUpon>Global.asax</DependentUpon>
     </Compile>
+    <Compile Include="Models\BeneficiarioModel.cs" />
     <Compile Include="Models\ClienteModel.cs" />
     <Compile Include="Models\Validation\CpfValidation.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -346,6 +347,8 @@
   </ItemGroup>
   <ItemGroup>
     <Folder Include="Content\themes\base\minified\images\" />
+    <Folder Include="Scripts\Beneficiarios\" />
+    <Folder Include="Scripts\Utils\" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

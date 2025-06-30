@@ -1,13 +1,13 @@
-﻿
-$(document).ready(function () {
+﻿$(document).ready(function () {
     $('#formCadastro').submit(function (e) {
+
         e.preventDefault();
         $.ajax({
             url: urlPost,
             method: "POST",
             data: {
                 "Nome": $(this).find("#Nome").val(),
-                "CPF": $(this).find("#CPF").val(),
+                "CPF": $(this).find("#CPF").val().replace(/\D/g, ''),
                 "CEP": $(this).find("#CEP").val(),
                 "Email": $(this).find("#Email").val(),
                 "Sobrenome": $(this).find("#Sobrenome").val(),
@@ -15,7 +15,8 @@ $(document).ready(function () {
                 "Estado": $(this).find("#Estado").val(),
                 "Cidade": $(this).find("#Cidade").val(),
                 "Logradouro": $(this).find("#Logradouro").val(),
-                "Telefone": $(this).find("#Telefone").val()
+                "Telefone": $(this).find("#Telefone").val(),
+                "Beneficiarios": window.beneficiarios
             },
             error:
                 function (r) {

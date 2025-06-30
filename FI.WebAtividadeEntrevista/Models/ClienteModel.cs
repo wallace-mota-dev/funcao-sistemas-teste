@@ -1,4 +1,5 @@
-﻿using FI.WebAtividadeEntrevista.Models.Validation;
+﻿using FI.WebAtividadeEntrevista.Models;
+using FI.WebAtividadeEntrevista.Models.Validation;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -74,5 +75,12 @@ namespace WebAtividadeEntrevista.Models
         [Required(ErrorMessage = "CPF é obrigatório")]
         [CpfValidation]
         public string CPF { get; set; }
+
+        /// <summary>
+        /// BENEFICIARIOS
+        /// </summary>
+        public List<BeneficiarioModel> Beneficiarios { get; set; }
+
+
     }
 }
